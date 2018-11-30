@@ -123,5 +123,6 @@ print("step 2")
 stanford_rdd = rdd_html_cleaned.map(lambda x: ner_stanford(x, st))
 
 
-print(stanford_rdd.collect())
+#print(stanford_rdd.collect())
+stanford_rdd.saveAsTextFile('Entities_short.csv')
 print('Done')
