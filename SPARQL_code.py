@@ -1,8 +1,11 @@
+import requests
+import SPARQLWrapper
+from SPARQLWrapper import SPARQLWrapper , JSON
 
-ELASTICSEARCH_URL = 'http://10.149.0.127:9200/freebase/label/_search'
-TRIDENT_URL = 'http://10.141.0.11:8082/sparql'
+ELASTICSEARCH_URL = 'http://10.149.0.127:9200/freebase/label/'
+TRIDENT_URL = 'http://<host>:8082/sparql'
 
-query = 'obama' # token obtained 
+query = 'obama' # token obtained
 
 print('Searching for "%s"...' % query)
 #looking for queries that we get from the token with elasticsearch
@@ -46,9 +49,9 @@ personEntity_same_as_template = prefixes + """
 SELECT DISTINCT ?person 
 WHERE
 {
-	?person wdt:P31 wd:Q5 .       #where ?person isa(wdt:P31) human(wd:Q5)
-	?s owl:sameAs %s .
-    	{ ?s owl:sameAs ?person .} UNION { ?person owl:sameAs ?s .}
+    ?person wdt:P31 wd:Q5 .       #where ?person isa(wdt:P31) human(wd:Q5)
+    ?s owl:sameAs %s .
+        { ?s owl:sameAs ?person .} UNION { ?person owl:sameAs ?s .}
 
 }
 """
@@ -108,8 +111,8 @@ for i in ids:
         print(i, ':', n)
         sys.stdout.flush()
         facts[i] = n
-	n_total = n_total+n
- 
+    n_total = n_total+n
+
 def get_best(i):
     return math.log(facts[i]) * scores[i]
 
@@ -117,38 +120,38 @@ def get_best(i):
 print('Best matches:')
 for i in sorted(ids, key=get_best, reverse=True)[:3]:
     print(i, ':', labels[i], '(facts: %s, score: %.2f)' % (facts[i], scores[i]) )
-    
+
     # the normalized score, which we will use when ranking the obtained entities
     norm_score = facts[i]/n_total
-    
+
     sys.stdout.flush()
-	#look which entity it is to choose the suited SPARQL query , tag = NER tag 
-	if tag == PERSON:
-      	    response = requests.post(TRIDENT_URL, data={'print': True, 'query': personEntity_same_as_template % i})
-	    if response:
-		response = response.json()
-		for binding in response.get('results', {}).get('bindings', []):
-		    print(' =', binding.get('same', {}).get('value', None))
-		
-	elif tag == ORGANISATION:
-	    response = requests.post(TRIDENT_URL, data={'print': True, 'query': organisationEntity_same_as_template % i})
-	    if response:
-		response = response.json()
-		for binding in response.get('results', {}).get('bindings', []):
-		    print(' =', binding.get('same', {}).get('value', None))
-		
-	elif tag == LOCATION:
-	    response = requests.post(TRIDENT_URL, data={'print': True, 'query': locationEntity_same_as_template % i})
-	    if response:
-		response = response.json()
-		for binding in response.get('results', {}).get('bindings', []):
-		    print(' =', binding.get('same', {}).get('value', None))
-	else:
-	    response = requests.post(TRIDENT_URL, data={'print': True, 'query': same_as_template % i})
-	    if response:
-		response = response.json()
-		for binding in response.get('results', {}).get('bindings', []):
-		    print(' =', binding.get('same', {}).get('value', None))
+    #look which entity it is to choose the suited SPARQL query , tag = NER tag
+    if tag == PERSON:
+        response = requests.post(TRIDENT_URL, data={'print': True, 'query': personEntity_same_as_template % i})
+        if response:
+            response = response.json()
+            for binding in response.get('results', {}).get('bindings', []):
+                print(' =', binding.get('same', {}).get('value', None))
+
+    elif tag == ORGANISATION:
+        response = requests.post(TRIDENT_URL, data={'print': True, 'query': organisationEntity_same_as_template % i})
+        if response:
+            response = response.json()
+            for binding in response.get('results', {}).get('bindings', []):
+                print(' =', binding.get('same', {}).get('value', None))
+
+    elif tag == LOCATION:
+        response = requests.post(TRIDENT_URL, data={'print': True, 'query': locationEntity_same_as_template % i})
+        if response:
+            response = response.json()
+            for binding in response.get('results', {}).get('bindings', []):
+                print(' =', binding.get('same', {}).get('value', None))
+    else:
+        response = requests.post(TRIDENT_URL, data={'print': True, 'query': same_as_template % i})
+        if response:
+            response = response.json()
+            for binding in response.get('results', {}).get('bindings', []):
+                print(' =', binding.get('same', {}).get('value', None))
 
 
 
